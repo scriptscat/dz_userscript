@@ -28,7 +28,7 @@ class threadplugin_tampermonkey_install
         $info = <<<Eof
 <div class="pbt cl">
 <div class="z">
-<p style="font-size: 16px">请在<a href="https://scriptcat.org/search" target="_blank" style="color:#1976d2;">脚本站</a>发布脚本,然后将链接复制到下方</p>
+<p style="font-size: 16px">请在<a href="https://scriptcat.org/post-script" target="_blank" style="color:#1976d2;">脚本站</a>发布脚本,然后将链接复制到下方</p>
 <input name="script_url" id="script_url" style="width: 400px" placeholder="https://scriptcat.org/script-show-page/@id">
 </div>
 </div>
@@ -60,22 +60,22 @@ Eof;
     {
         global $_G;
         // if($_POST['script_url']){
-            $pos=strrpos($_POST['script_url'],"/");
-            $scriptId=substr($_POST['script_url'],$pos===-1?0:($pos+1));
-            $script = self::sql_select('cdb_tampermonkey_script', ['id' => $scriptId], '*');
-            if(!$script){
-                showmessage("脚本不存在,请确认脚本链接正确");
-                return false;
-            }
-            if($script[0]['user_id']!=$_G['uid']){
-                showmessage("你并不是本脚本的发布者");
-                return false;
-            }
-            if($script[0]['post_id']){
-                showmessage("本脚本已经绑定帖子:https://bbs.tampermonkey.net.cn/forum.php?mod=viewthread&tid=".$script[0]['post_id']);
-                return false;
-            }
-            $_G['script_url_id']=$scriptId;
+        $pos = strrpos($_POST['script_url'], "/");
+        $scriptId = substr($_POST['script_url'], $pos === -1 ? 0 : ($pos + 1));
+        $script = self::sql_select('cdb_tampermonkey_script', ['id' => $scriptId], '*');
+        if (!$script) {
+            showmessage("脚本不存在,请确认脚本链接正确");
+            return false;
+        }
+        if ($script[0]['user_id'] != $_G['uid']) {
+            showmessage("你并不是本脚本的发布者");
+            return false;
+        }
+        if ($script[0]['post_id']) {
+            showmessage("本脚本已经绑定帖子:https://bbs.tampermonkey.net.cn/forum.php?mod=viewthread&tid=" . $script[0]['post_id']);
+            return false;
+        }
+        $_G['script_url_id'] = $scriptId;
         // }else{
         //     $_G['script'] = $this->parseMeta($_POST['JB_code'], $tid);
         //     if (!is_array($_G['script'])) {
@@ -88,9 +88,9 @@ Eof;
     public function newthread_submit_end($fid, $tid)
     {
         global $_G;
-        if($_POST['script_url']){
-            self::sql_update('cdb_tampermonkey_script', ['post_id'=>$tid],['id'=>$_G['script_url_id']]);
-        }else{
+        if ($_POST['script_url']) {
+            self::sql_update('cdb_tampermonkey_script', ['post_id' => $tid], ['id' => $_G['script_url_id']]);
+        } else {
             $_G['script'] = $this->parseMeta($_POST['JB_code'], $tid);
             $script = $this->postScript($tid, $_G['script']);
             $script_id = self::sql_insert('cdb_tampermonkey_script', $script);
@@ -167,14 +167,16 @@ Eof;
         $ret = [];
         foreach ($kvMatches as $k => $v) {
             switch ($v[1]) {
-                case "grant": {
-                        $ret[$v[1]][] = $v[2];
-                        break;
-                    }
-                default: {
-                        $ret[$v[1]] = $v[2];
-                        break;
-                    }
+                case "grant":
+                {
+                    $ret[$v[1]][] = $v[2];
+                    break;
+                }
+                default:
+                {
+                    $ret[$v[1]] = $v[2];
+                    break;
+                }
             }
         }
         if ($ret['name'] == '' || mb_strlen($ret['name']) > 128) {
@@ -196,11 +198,11 @@ Eof;
         $info = <<<Eof
 <div class="pbt cl">
 <div class="z"
-<p style="font-size: 16px"><a href="https://scriptcat.org/search" target="_blank" style="color:#1976d2">脚本站</a>脚本url</p>
+<p style="font-size: 16px"><a href="https://scriptcat.org/post-script" target="_blank" style="color:#1976d2">脚本站</a>脚本url</p>
 <input name="script_url" id="script_url" style="width: 100%" value="https://scriptcat.org/script-show-page/{$script['id']}" disabled><br>
 <p style="font-size: 16px">关于脚本的更新请在<a href="https://scriptcat.org/script-show-page/{$script['id']}" target="_blank" style="color:#1976d2">脚本页->更新脚本</a>进行编辑和修改</p>
 Eof;
-$info.="
+        $info .= "
 </div>
 </div>
 <p style='font-size: 16px;color:#ff5b5b'>请注意帖子内容与脚本站描述不共用,需要分开编辑</p>";
@@ -246,8 +248,9 @@ $info.="
     public function viewthread($tid)
     {
         $script = self::sql_select('cdb_tampermonkey_script', ['post_id' => $_GET['tid']], '*')[0];
+        $code = self::sql_select('cdb_tampermonkey_script_code', ['script_id' => $script['id']], '*', 'order by id desc')[0];
         //$jsInfo = self::sql_select('cdb_tampermonkey_script_code', ['script_id' => $script['id']], '*', 'order by id desc')[0];
-        $url = 'https://scriptcat.org/scripts/code/'. $script['id'].'/'.urlencode($script['name']) . '.user.js';
+        $url = 'https://scriptcat.org/scripts/code/' . $script['id'] . '/' . urlencode($script['name']) . '.user.js';
 
         $info = <<<Eof
 <style type="text/css">
@@ -275,12 +278,29 @@ $info.="
     color: #fff
 }
 </style>
+Eof;
+        switch ($script['type']) {
+            case 3:
+                $name = urlencode($script['name']);
+                $info .= <<<Eof
+<input type="text" value="// @require https://scriptcat.org/lib/${script['id']}/{$code['version']}/${name}.js" disabled style="width: 80%"/>
+<br>
+<a class="install-help-link" title="如何使用" target="_blank" href="https://bbs.tampermonkey.net.cn/thread-249-1-1.html">如何使用？</a>
+<a class="install-help-link" style="background-color:#3399FF" title="库问题反馈" target="_blank" href="https://scriptcat.org/script-show-page/{$script[id]}/issue">库问题反馈</a>
+<a class="install-help-link" style="background-color:#2261b7" title="给库评分" target="_blank" href="https://scriptcat.org/script-show-page/{$script[id]}/comment">给库评分</a>
+<a class="install-help-link" style="background-color:red" title="查看代码" target="_blank" href="https://scriptcat.org/script-show-page/{$script[id]}/code">查看代码</a>
+Eof;
+                break;
+            default:
+                $info .= <<<Eof
 <a href="{$url}" class="install-link">安装此脚本</a>
 <a class="install-help-link" title="如何安装" target="_blank" href="https://bbs.tampermonkey.net.cn/forum.php?mod=viewthread&tid=57">如何安装？</a>
-<a class="install-help-link" style="background-color:#3399FF" title="寻找更多脚本" target="_blank" href="https://scriptcat.org/script-show-page/{$script[id]}/issue">脚本问题反馈</a>
+<a class="install-help-link" style="background-color:#3399FF" title="脚本问题反馈" target="_blank" href="https://scriptcat.org/script-show-page/{$script[id]}/issue">脚本问题反馈</a>
 <a class="install-help-link" style="background-color:#2261b7" title="给脚本评分" target="_blank" href="https://scriptcat.org/script-show-page/{$script[id]}/comment">给脚本评分</a>
 <a class="install-help-link" style="background-color:red" title="查看代码" target="_blank" href="https://scriptcat.org/script-show-page/{$script[id]}/code">查看代码</a>
 Eof;
+                break;
+        }
         //<a class="install-help-link" title="如何安装" rel="nofollow" href="/zh-CN/help/installing-user-scripts">?</a>
         return $info;
     }
@@ -314,6 +334,7 @@ Eof;
         //echo $sql;
         return DB::query($sql);
     }
+
     public function sql_update($table, $data, $where)
     {
         foreach ($data as $k => $v) {

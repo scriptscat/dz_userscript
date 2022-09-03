@@ -12,7 +12,7 @@ RUN apk update && \
     chmod 755 docker-entrypoint.sh && \
     docker-php-ext-install mysqli
 
-ENV DZ_URL https://www.discuz.net/daily/?dl=DZX-SC_UTF8-v3.5-202011140500-86068c96.zip
+ENV DZ_URL https://www.discuz.net/down/Discuz_X3.4_SC_UTF8_20220518.zip
 ENV DZ_WWW_ROOT /var/www/html
 
 ADD ${DZ_URL} /tmp/discuz.zip
@@ -20,7 +20,7 @@ RUN unzip /tmp/discuz.zip \
     && mv upload/* ${DZ_WWW_ROOT} \
     && cd ${DZ_WWW_ROOT} \
     && chmod a+w -R config data uc_server/data uc_client/data \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/Lib/apt/lists/*
 
 EXPOSE 80/tcp
 
